@@ -10,6 +10,7 @@ import time
 import hashlib
 import requests
 from datetime import datetime
+import requests
 
 app = Flask(__name__, instance_relative_config=False)
 app.config['start_time'] = time.time()
