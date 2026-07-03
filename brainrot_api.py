@@ -365,3 +365,50 @@ if __name__ == '__main__':
     print(f"[CYPHER] {len(TRAITS)} traits disponibles")
     print(f"[CYPHER] {sum(len(servers) for servers in SERVER_DATABASE.values())} servidores registrados")
     app.run(host='0.0.0.0', port=10000, debug=False, use_reloader=False)
+
+# ========== NUEVOS ENDPOINTS GET PARA EVITAR POST ==========
+
+@app.route('/api/brainrot/scan/<brainrot>', methods=['GET'])
+def scan_servers_get(brainrot):
+    """Versión GET para escanear servidores"""
+    try:
+        brainrot_filter = brainrot if brainrot != "all" else None
+        results = scan_servers(brainrot_filter)
+        
+        return jsonify({
+            "success": True,
+            "total_found": len(results),
+            "servers": results,
+            "timestamp": time.time()
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/brainrot/find/<brainrot>', methods=['GET'])
+def find_brainrot_server_get(brainrot):
+    """Versión GET para buscar servidor"""
+    try:
+        results = scan_servers(brainrot)
+        
+        if results:
+            return jsonify({
+                "success": True,
+                "jobId": results[0]["jobId"],
+                "brainrot": results[0]["brainrot"],
+                "total_multiplier": results[0]["total_multiplier"],
+                "players": results[0]["players"],
+                "mutation": results[0]["mutation"],
+                "traits": results[0]["traits"]
+            })
+        else:
+            new_id = f"public-{int(time.time())}-{brainrot[:10].replace(' ', '')}"
+            return jsonify({
+                "success": True,
+                "jobId": new_id,
+                "brainrot": brainrot,
+                "created": True
+            })
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
