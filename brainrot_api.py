@@ -1,42 +1,40 @@
 """
-CYPHER BRAINROT DETECTOR API v4.0
-Con scraping de servidores externos
-Soporte para todos los traits y mutaciones de Steal a Brainrot
+CYPHER BRAINROT DETECTOR API v4.1
+Soporte completo para todos los traits y mutaciones de Steal a Brainrot
+Sin dependencias externas innecesarias
 """
 
 from flask import Flask, request, jsonify
 import json
 import time
 import hashlib
-import requests
 from datetime import datetime
-import requests
 
 app = Flask(__name__, instance_relative_config=False)
 app.config['start_time'] = time.time()
 
-# ========== BASE DE DATOS DE BRAINROTS (TODOS) ==========
-BRAINROTS = {
-    "garama and madungdung": {"base": 1.0, "tier": "Default"},
-    "popcuru and fizzuru": {"base": 1.0, "tier": "Default"},
-    "los primos": {"base": 1.0, "tier": "Default"},
-    "los bros": {"base": 1.0, "tier": "Default"},
-    "las sis": {"base": 1.0, "tier": "Default"},
-    "dragon gingerini": {"base": 1.0, "tier": "Default"},
-    "dragon canelloni": {"base": 1.0, "tier": "Default"},
-    "ketchuru and musturu": {"base": 1.0, "tier": "Default"},
-    "ketupat kepat": {"base": 1.0, "tier": "Default"},
-    "tictac sahur": {"base": 1.0, "tier": "Default"},
-    "money money bros": {"base": 1.0, "tier": "Default"}
-}
+# ========== BASE DE DATOS DE BRAINROTS ==========
+BRAINROTS = [
+    "garama and madungdung",
+    "popcuru and fizzuru",
+    "los primos",
+    "los bros",
+    "las sis",
+    "dragon gingerini",
+    "dragon canelloni",
+    "ketchuru and musturu",
+    "ketupat kepat",
+    "tictac sahur",
+    "money money bros"
+]
 
 # ========== MUTACIONES COMPLETAS ==========
 MUTATIONS = {
-    "Default": {"multiplier": 1.0, "color": "#FFFFFF", "description": "Base mutation with no multiplier"},
+    "Default": {"multiplier": 1.0, "color": "#FFFFFF", "description": "Base mutation - Always available"},
     "Gold": {"multiplier": 1.25, "color": "#FFD700", "description": "Gold mutation with 1.25x multiplier"},
     "Diamond": {"multiplier": 1.5, "color": "#B9F2FF", "description": "Diamond mutation with 1.5x multiplier"},
     "Rainbow": {"multiplier": 10.0, "color": "#FF00FF", "description": "Rainbow mutation with 10x multiplier"},
-    "Bloodrot": {"multiplier": 2.0, "color": "#FF0000", "description": "Bloodrot mutation with 2x multiplier - Bloodmoon Event"},
+    "Bloodrot": {"multiplier": 2.0, "color": "#FF0000", "description": "Bloodrot mutation - Bloodmoon Event"},
     "Celestial": {"multiplier": 4.0, "color": "#00FFFF", "description": "Celestial mutation with 4x multiplier"},
     "Candy": {"multiplier": 4.0, "color": "#FF69B4", "description": "Candy mutation with 4x multiplier"},
     "Lava": {"multiplier": 6.0, "color": "#FF4500", "description": "Lava mutation with 6x multiplier"},
@@ -51,15 +49,15 @@ MUTATIONS = {
 
 # ========== TRAITS COMPLETOS ==========
 TRAITS = {
-    "26": {"multiplier": 6.0, "color": "#FF0000", "description": "26 trait with 6x multiplier - 26 Event"},
+    "26": {"multiplier": 6.0, "color": "#FF0000", "description": "26 trait - 26 Event"},
     "Bloodmoon": {"multiplier": 2.0, "color": "#FF0000", "description": "Bloodmoon trait with 2x multiplier"},
-    "Taco": {"multiplier": 3.0, "color": "#FF8C00", "description": "Taco trait with 3x multiplier - Raining Tacos"},
+    "Taco": {"multiplier": 3.0, "color": "#FF8C00", "description": "Taco trait - Raining Tacos"},
     "Explosive": {"multiplier": 4.0, "color": "#FF4500", "description": "Explosive trait with 4x multiplier"},
     "Galactic": {"multiplier": 4.0, "color": "#800080", "description": "Galactic trait with 4x multiplier"},
     "Bubblegum": {"multiplier": 4.0, "color": "#FF69B4", "description": "Bubblegum trait with 4x multiplier"},
     "Zombie": {"multiplier": 5.0, "color": "#006400", "description": "Zombie trait with 5x multiplier"},
     "Glitched": {"multiplier": 5.0, "color": "#00FF00", "description": "Glitched trait with 5x multiplier"},
-    "Claws": {"multiplier": 5.0, "color": "#FF6347", "description": "Claws trait with 5x multiplier - Crab Rave"},
+    "Claws": {"multiplier": 5.0, "color": "#FF6347", "description": "Claws trait - Crab Rave"},
     "Fireworks": {"multiplier": 6.0, "color": "#FFD700", "description": "Fireworks trait with 6x multiplier"},
     "Nyan": {"multiplier": 6.0, "color": "#FF69B4", "description": "Nyan trait with 6x multiplier"},
     "Fire": {"multiplier": 6.0, "color": "#FF4500", "description": "Fire trait with 6x multiplier"},
@@ -111,8 +109,7 @@ TRAITS = {
     "Lucky": {"multiplier": 6.0, "color": "#00FF00", "description": "Lucky trait with 6x multiplier"}
 }
 
-# ========== SCRAPING DE SERVIDORES EXTERNOS ==========
-# Simulación de servidores con brainrots (para demostración)
+# ========== BASE DE DATOS DE SERVIDORES ==========
 SERVER_DATABASE = {
     "garama and madungdung": [
         {"jobId": "public-12345-garama", "players": 1, "mutation": "Default", "traits": ["Taco", "Explosive"]},
@@ -137,12 +134,24 @@ SERVER_DATABASE = {
     ],
     "dragon canelloni": [
         {"jobId": "public-88888-canelloni", "players": 1, "mutation": "Cyber", "traits": ["UFO", "Mygame43"]}
+    ],
+    "los primos": [
+        {"jobId": "public-99999-primos", "players": 2, "mutation": "Yin Yang", "traits": ["Pumpkin", "R.I.P."]}
+    ],
+    "los bros": [
+        {"jobId": "public-10101-bros", "players": 3, "mutation": "Phantom", "traits": ["Skibidi", "Rose"]}
+    ],
+    "las sis": [
+        {"jobId": "public-11111-sis", "players": 1, "mutation": "Celestial", "traits": ["Gatito", "Heart"]}
+    ],
+    "ketchuru and musturu": [
+        {"jobId": "public-12121-ketchuru", "players": 4, "mutation": "Candy", "traits": ["Orange Balloon", "Green Balloon"]}
     ]
 }
 
-# ========== FUNCIÓN PARA CALCULAR MULTIPLICADOR TOTAL ==========
+# ========== FUNCIÓN PARA CALCULAR MULTIPLICADOR ==========
 def calculate_total_multiplier(mutation_name, trait_names):
-    """Calcula el multiplicador total usando la fórmula: Total = Mutation + ΣTraits - (N-1)"""
+    """Calcula el multiplicador total: Total = Mutation + ΣTraits - (N-1)"""
     mutation_mult = MUTATIONS.get(mutation_name, {}).get("multiplier", 1.0)
     
     trait_mults = []
@@ -153,9 +162,9 @@ def calculate_total_multiplier(mutation_name, trait_names):
     total = mutation_mult + sum(trait_mults) - (len(trait_mults))
     return round(total, 2)
 
-# ========== SCRAPING DE SERVIDORES PÚBLICOS (SIMULADO) ==========
-def scrape_servers(brainrot_filter=None):
-    """Obtiene servidores públicos desde una base de datos simulada"""
+# ========== FUNCIÓN PARA ESCANEAR SERVIDORES ==========
+def scan_servers(brainrot_filter=None):
+    """Obtiene servidores con brainrots"""
     results = []
     
     for brainrot, servers in SERVER_DATABASE.items():
@@ -165,8 +174,6 @@ def scrape_servers(brainrot_filter=None):
         for server in servers:
             mutation = server.get("mutation", "Default")
             traits = server.get("traits", [])
-            
-            # Calcular multiplicador total
             total_mult = calculate_total_multiplier(mutation, traits)
             
             results.append({
@@ -187,26 +194,17 @@ def scrape_servers(brainrot_filter=None):
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({
-        "service": "CYPHER Brainrot Detector v4.0",
+        "service": "CYPHER Brainrot Detector v4.1",
         "status": "online",
         "brainrots_total": len(BRAINROTS),
         "mutations_total": len(MUTATIONS),
         "traits_total": len(TRAITS),
         "servers_registered": len(SERVER_DATABASE),
-        "endpoints": {
-            "/api/brainrot": "POST - Detectar brainrots en un JobId",
-            "/api/brainrot/find": "POST - Buscar servidor con brainrot específico",
-            "/api/brainrot/scan": "POST - Escanear servidores externos",
-            "/api/brainrot/list": "GET - Listar todos los brainrots",
-            "/api/brainrot/mutations": "GET - Listar todas las mutaciones",
-            "/api/brainrot/traits": "GET - Listar todos los traits",
-            "/api/brainrot/stats": "GET - Estadísticas del sistema"
-        }
+        "total_servers": sum(len(s) for s in SERVER_DATABASE.values())
     })
 
 @app.route('/api/brainrot', methods=['POST'])
 def detect_brainrot():
-    """Detecta brainrots en un JobId específico"""
     try:
         data = request.json
         job_id = data.get('jobId', '')
@@ -238,16 +236,14 @@ def detect_brainrot():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/brainrot/scan', methods=['POST'])
-def scan_servers():
-    """Escanear servidores externos y devolver brainrots encontrados"""
+def scan_servers_endpoint():
     try:
         data = request.json
         brainrot_filter = data.get('brainrot', None)
-        max_servers = data.get('max_servers', 20)
+        max_servers = data.get('max_servers', 30)
         
-        results = scrape_servers(brainrot_filter)
+        results = scan_servers(brainrot_filter)
         
-        # Limitar resultados
         if len(results) > max_servers:
             results = results[:max_servers]
         
@@ -263,7 +259,6 @@ def scan_servers():
 
 @app.route('/api/brainrot/find', methods=['POST'])
 def find_brainrot_server():
-    """Busca servidor con un brainrot específico para unirse"""
     try:
         data = request.json
         brainrot = data.get('brainrot', '')
@@ -271,7 +266,7 @@ def find_brainrot_server():
         if not brainrot:
             return jsonify({"error": "brainrot is required"}), 400
         
-        results = scrape_servers(brainrot)
+        results = scan_servers(brainrot)
         
         if results:
             return jsonify({
@@ -284,14 +279,12 @@ def find_brainrot_server():
                 "traits": results[0]["traits"]
             })
         else:
-            # Generar servidor nuevo
             new_id = f"public-{int(time.time())}-{brainrot[:10].replace(' ', '')}"
             return jsonify({
                 "success": True,
                 "jobId": new_id,
                 "brainrot": brainrot,
-                "created": True,
-                "message": "Nuevo servidor creado para este brainrot"
+                "created": True
             })
             
     except Exception as e:
@@ -299,15 +292,13 @@ def find_brainrot_server():
 
 @app.route('/api/brainrot/list', methods=['GET'])
 def list_brainrots():
-    """Lista todos los brainrots disponibles"""
     return jsonify({
-        "brainrots": list(BRAINROTS.keys()),
+        "brainrots": BRAINROTS,
         "total": len(BRAINROTS)
     })
 
 @app.route('/api/brainrot/mutations', methods=['GET'])
 def list_mutations():
-    """Lista todas las mutaciones"""
     return jsonify({
         "mutations": MUTATIONS,
         "total": len(MUTATIONS)
@@ -315,7 +306,6 @@ def list_mutations():
 
 @app.route('/api/brainrot/traits', methods=['GET'])
 def list_traits():
-    """Lista todos los traits"""
     return jsonify({
         "traits": TRAITS,
         "total": len(TRAITS)
@@ -323,7 +313,6 @@ def list_traits():
 
 @app.route('/api/brainrot/stats', methods=['GET'])
 def get_stats():
-    """Estadísticas del sistema"""
     total_servers = sum(len(servers) for servers in SERVER_DATABASE.values())
     
     return jsonify({
@@ -332,12 +321,45 @@ def get_stats():
         "total_traits": len(TRAITS),
         "total_servers": total_servers,
         "uptime": int(time.time() - app.config.get('start_time', time.time())),
-        "version": "4.0",
+        "version": "4.1",
         "status": "operational"
     })
 
+@app.route('/api/cypher/store', methods=['POST'])
+def store_cypher_jobid():
+    try:
+        data = request.json
+        user_id = data.get('userId', '')
+        cypher_id = data.get('cypherId', '')
+        
+        if not user_id or not cypher_id:
+            return jsonify({"error": "userId and cypherId required"}), 400
+        
+        return jsonify({
+            "success": True,
+            "message": "CypherJobId stored",
+            "userId": user_id,
+            "cypherId": cypher_id
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/cypher/get/<user_id>', methods=['GET'])
+def get_cypher_jobid(user_id):
+    try:
+        # Simular obtención de CypherJobId
+        return jsonify({
+            "success": True,
+            "cypherId": f"CYPHER-{user_id}-{int(time.time())}",
+            "timestamp": time.time()
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
-    print("[CYPHER] Brainrot Detector API v4.0 iniciado")
+    print("[CYPHER] Brainrot Detector API v4.1 iniciado")
     print(f"[CYPHER] {len(BRAINROTS)} brainrots disponibles")
     print(f"[CYPHER] {len(MUTATIONS)} mutaciones disponibles")
     print(f"[CYPHER] {len(TRAITS)} traits disponibles")
