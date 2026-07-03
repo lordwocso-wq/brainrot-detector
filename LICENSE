@@ -1,21 +1,50 @@
-MIT License
 
-Copyright (c) 2026 lordwocso-wq
+### **1.4 Guardar los cambios**
+1. En cada archivo, ve abajo y escribe un mensaje de commit:
+   - Para `brainrot_api.py`: "Add: API principal"
+   - Para `requirements.txt`: "Add: Dependencias"
+   - Para `README.md`: "Update: Documentación"
+2. Haz clic en **"Commit new file"**
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+### **1.5 Verificar el repositorio**
+Tu repositorio ahora tiene:
+- `brainrot_api.py`
+- `requirements.txt`
+- `README.md`
+- `.gitignore` (autogenerado)
+- `LICENSE` (autogenerado)
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+URL de tu repositorio: `https://github.com/TU-USUARIO/brainrot-detector`
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+---
+
+## **PASO 2: TUTORIAL PARA DESPLEGAR EN RENDER.COM**
+
+### **2.1 Crear cuenta en Render**
+1. Ve a https://render.com
+2. Haz clic en **"Sign Up"**
+3. Usa tu cuenta de GitHub (recomendado) o email
+4. Verifica tu email
+
+### **2.2 Desplegar el servicio**
+1. En el dashboard, haz clic en **"New +"** → **"Web Service"**
+2. Conecta tu cuenta de GitHub
+3. Selecciona el repositorio `brainrot-detector`
+4. Configura:
+   - **Name**: `brainrot-detector`
+   - **Environment**: `Python 3`
+   - **Region**: `Frankfurt` (o la más cercana)
+   - **Branch**: `main`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python brainrot_api.py`
+   - **Plan**: `Free`
+
+5. Haz clic en **"Create Web Service"**
+
+### **2.3 Esperar el despliegue**
+- Render construirá el servicio (1-2 minutos)
+- Verás logs en tiempo real
+- Cuando termine, tendrás una URL como: `https://brainrot-detector.onrender.com`
+
+### **2.4 Probar la API**
+Abre tu navegador y ve a:
