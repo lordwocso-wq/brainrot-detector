@@ -317,6 +317,64 @@ def get_stats():
         "status": "operational"
     })
 
+# ========== NUEVO ENDPOINT PARA CYPHERJOBID PERSISTENTE ==========
+# Base de datos en memoria para CypherJobIds (persiste mientras el servidor esté activo)
+CYPHER_DATABASE = {}
+
+@app.route('/api/cypher/store', methods=['POST'])
+def store_cypher_jobid():
+    """Almacena un CypherJobId para un usuario"""
+    try:
+        data = request.json
+        user_id = data.get('userId', '')
+        cypher_id = data.get('cypherId', '')
+        brainrot = data.get('brainrot', '')
+        
+        if not user_id or not cypher_id:
+            return jsonify({"error": "userId and cypherId are required"}), 400
+        
+        CYPHER_DATABASE[user_id] = {
+            "cypherId": cypher_id,
+            "brainrot": brainrot,
+            "timestamp": time.time(),
+            "expires": time.time() + 86400  # 24 horas
+        }
+        
+        return jsonify({
+            "success": True,
+            "message": "CypherJobId almacenado",
+            "userId": user_id,
+            "cypherId": cypher_id,
+            "timestamp": time.time()
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/cypher/get/<user_id>', methods=['GET'])
+def get_cypher_jobid(user_id):
+    """Obtiene un CypherJobId almacenado para un usuario"""
+    try:
+        if user_id in CYPHER_DATABASE:
+            data = CYPHER_DATABASE[user_id]
+            # Verificar si expiró
+            if data["expires"] < time.time():
+                del CYPHER_DATABASE[user_id]
+                return jsonify({"error": "CypherJobId expirado"}), 404
+            
+            return jsonify({
+                "success": True,
+                "cypherId": data["cypherId"],
+                "brainrot": data["brainrot"],
+                "timestamp": data["timestamp"],
+                "expires": data["expires"]
+            })
+        else:
+            return jsonify({"error": "CypherJobId no encontrado"}), 404
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ========== INICIALIZACIÓN ==========
 print("[CYPHER] Brainrot Detector API v3.1 iniciado")
 print(f"[CYPHER] {len(BRAINROTS)} brainrots disponibles")
