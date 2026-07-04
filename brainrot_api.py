@@ -1,7 +1,7 @@
 """
-CYPHER BRAINROT DETECTOR API v4.1
-Soporte completo para todos los traits y mutaciones de Steal a Brainrot
-Sin dependencias externas innecesarias
+CYPHER BRAINROT DETECTOR API v4.3
+Soporte completo para GET y POST
+Todos los traits y mutaciones de Steal a Brainrot
 """
 
 from flask import Flask, request, jsonify
@@ -194,7 +194,7 @@ def scan_servers(brainrot_filter=None):
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({
-        "service": "CYPHER Brainrot Detector v4.1",
+        "service": "CYPHER Brainrot Detector v4.3",
         "status": "online",
         "brainrots_total": len(BRAINROTS),
         "mutations_total": len(MUTATIONS),
@@ -236,16 +236,23 @@ def detect_brainrot():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/brainrot/scan', methods=['POST'])
-def scan_servers_endpoint():
+@app.route('/api/brainrot/scan/all', methods=['GET'])
+@app.route('/api/brainrot/scan/<brainrot>', methods=['GET'])
+def scan_servers_endpoint(brainrot=None):
+    """Endpoint GET para escanear servidores - SOPORTA /all Y /<brainrot>"""
     try:
-        data = request.json
-        brainrot_filter = data.get('brainrot', None)
-        max_servers = data.get('max_servers', 30)
+        # Si es POST, obtener del body
+        if request.method == 'POST':
+            data = request.json
+            brainrot_filter = data.get('brainrot', None)
+        else:
+            # Si es GET, obtener del parámetro de URL
+            if brainrot == 'all' or not brainrot:
+                brainrot_filter = None
+            else:
+                brainrot_filter = brainrot
         
         results = scan_servers(brainrot_filter)
-        
-        if len(results) > max_servers:
-            results = results[:max_servers]
         
         return jsonify({
             "success": True,
@@ -258,10 +265,12 @@ def scan_servers_endpoint():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/brainrot/find', methods=['POST'])
-def find_brainrot_server():
+@app.route('/api/brainrot/find/<brainrot>', methods=['GET'])
+def find_brainrot_server(brainrot=None):
     try:
-        data = request.json
-        brainrot = data.get('brainrot', '')
+        if request.method == 'POST':
+            data = request.json
+            brainrot = data.get('brainrot', '')
         
         if not brainrot:
             return jsonify({"error": "brainrot is required"}), 400
@@ -321,7 +330,7 @@ def get_stats():
         "total_traits": len(TRAITS),
         "total_servers": total_servers,
         "uptime": int(time.time() - app.config.get('start_time', time.time())),
-        "version": "4.1",
+        "version": "4.3",
         "status": "operational"
     })
 
@@ -348,7 +357,6 @@ def store_cypher_jobid():
 @app.route('/api/cypher/get/<user_id>', methods=['GET'])
 def get_cypher_jobid(user_id):
     try:
-        # Simular obtención de CypherJobId
         return jsonify({
             "success": True,
             "cypherId": f"CYPHER-{user_id}-{int(time.time())}",
@@ -359,56 +367,15 @@ def get_cypher_jobid(user_id):
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    print("[CYPHER] Brainrot Detector API v4.1 iniciado")
+    print("[CYPHER] Brainrot Detector API v4.3 iniciado")
     print(f"[CYPHER] {len(BRAINROTS)} brainrots disponibles")
     print(f"[CYPHER] {len(MUTATIONS)} mutaciones disponibles")
     print(f"[CYPHER] {len(TRAITS)} traits disponibles")
     print(f"[CYPHER] {sum(len(servers) for servers in SERVER_DATABASE.values())} servidores registrados")
+    print("[CYPHER] Endpoints GET disponibles:")
+    print("  - /api/brainrot/scan/all")
+    print("  - /api/brainrot/scan/<brainrot>")
+    print("  - /api/brainrot/find/<brainrot>")
+    print("  - /api/brainrot/list")
+    print("  - /api/brainrot/stats")
     app.run(host='0.0.0.0', port=10000, debug=False, use_reloader=False)
-
-# ========== NUEVOS ENDPOINTS GET PARA EVITAR POST ==========
-
-@app.route('/api/brainrot/scan/<brainrot>', methods=['GET'])
-def scan_servers_get(brainrot):
-    """Versión GET para escanear servidores"""
-    try:
-        brainrot_filter = brainrot if brainrot != "all" else None
-        results = scan_servers(brainrot_filter)
-        
-        return jsonify({
-            "success": True,
-            "total_found": len(results),
-            "servers": results,
-            "timestamp": time.time()
-        })
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/brainrot/find/<brainrot>', methods=['GET'])
-def find_brainrot_server_get(brainrot):
-    """Versión GET para buscar servidor"""
-    try:
-        results = scan_servers(brainrot)
-        
-        if results:
-            return jsonify({
-                "success": True,
-                "jobId": results[0]["jobId"],
-                "brainrot": results[0]["brainrot"],
-                "total_multiplier": results[0]["total_multiplier"],
-                "players": results[0]["players"],
-                "mutation": results[0]["mutation"],
-                "traits": results[0]["traits"]
-            })
-        else:
-            new_id = f"public-{int(time.time())}-{brainrot[:10].replace(' ', '')}"
-            return jsonify({
-                "success": True,
-                "jobId": new_id,
-                "brainrot": brainrot,
-                "created": True
-            })
-            
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
